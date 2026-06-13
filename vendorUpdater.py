@@ -1,45 +1,38 @@
-# quick program to download MAC vendor lists from the IEE
+# Grabs the latest MAC address list files from the IEEE and saves them to vendorLists
 
-import requests # needed to make web requests
+import os # needed for file handling
+import requests # needed for HTTP requests
 
-# The URL to the MA-L CSV - the Large Block Registry
-malURL = "http://standards-oui.ieee.org/oui/oui.csv"
 
-# this is the URL to the MA-M CSV - the Medium Block Registry
-mamURL = "http://standards-oui.ieee.org/oui28/mam.csv"
+DOWNLOADS = [
+    ("oui.csv",   "http://standards-oui.ieee.org/oui/oui.csv"),
+    ("mam.csv",   "http://standards-oui.ieee.org/oui28/mam.csv"),
+    ("oui36.csv", "http://standards-oui.ieee.org/oui36/oui36.csv"),
+]
 
-# this is the URL to the MA-S CSV - the Small Bloc Registry
-masURL = "http://standards-oui.ieee.org/oui36/oui36.csv"
+VENDOR_LISTS_DIR = "vendorLists"
 
-# Download MAM 
-response = requests.get(mamURL)
-file_Path = './vendorLists/mam.csv'
- 
-if response.status_code == 200:
-    with open(file_Path, 'wb') as file:
-        file.write(response.content)
-    print('MAM downloaded successfully')
-else:
-    print('Failed to download MAM')
+HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"}
 
-# Download OUI
-response = requests.get(malURL)
-file_Path = './vendorLists/oui.csv'
- 
-if response.status_code == 200:
-    with open(file_Path, 'wb') as file:
-        file.write(response.content)
-    print('OUI downloaded successfully')
-else:
-    print('Failed to download OUI')
 
-# Download OUI36 
-response = requests.get(masURL)
-file_Path = './vendorLists/oui36.csv'
- 
-if response.status_code == 200:
-    with open(file_Path, 'wb') as file:
-        file.write(response.content)
-    print('OUI36 downloaded successfully')
-else:
-    print('Failed to download OUI36')
+def download_mac_files():
+    """Downloads the three IEEE MAC registry CSV files into vendorLists, overwriting any existing copies."""
+
+    print("Downloading MAC address registry files from IEEE...")
+    for filename, url in DOWNLOADS:
+        file_path = os.path.join(VENDOR_LISTS_DIR, filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        print(f"  {filename}...", end=" ")
+        response = requests.get(url, headers=HEADERS)
+        response.raise_for_status()
+        with open(file_path, "wb") as f:
+            f.write(response.content)
+        print("done")
+    print("Vendor lists up to date.")
+
+
+if __name__ == "__main__":
+    print("Welcome to the MAC vendor list downloader for the wifi scanner demo.")
+    print("This tool will grab the 3 MAC registry lists from the publicly hosted IEEE site and download them to vendorLists.\n")
+    download_mac_files()
